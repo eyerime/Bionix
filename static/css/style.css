@@ -77,3 +77,24 @@ h2 { font-size: 1.15rem; margin: 0 0 1rem; }
 
 .empty { text-align: center; padding: 2rem 1rem; }
 .empty .btn { margin-top: .75rem; }
+
+/* ---- reader ---- */
+.actions { white-space: nowrap; }
+.actions form { display: inline-block; margin-left: .4rem; }
+.read-progress { position: sticky; top: 0; z-index: 5; height: 4px; background: var(--surface-2);
+  margin: -1.75rem -1.25rem 1.25rem; }
+#read-bar { height: 100%; width: 0; background: var(--accent); transition: width .15s linear; }
+.reader-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem; padding: 1rem 1.25rem; }
+.control { display: flex; flex-direction: column; gap: .3rem; min-width: 140px; }
+.control.grow { flex: 1; min-width: 200px; }
+.control label { font-size: .8rem; color: var(--muted); }
+.control input[type=range] { width: 100%; accent-color: var(--accent); }
+.reader-text { max-width: 760px; margin: 0 auto 2rem; padding: 2.25rem 2.5rem;
+  line-height: 1.95; color: var(--muted); }
+.reader-text p { margin: 0 0 1.4em; }
+.reader-text b { font-weight: 800; color: var(--text); }
+.reader-text.font-sm { font-size: 1rem; }
+.reader-text.font-md { font-size: 1.15rem; }
+.reader-text.font-lg { font-size: 1.35rem; }
+.reader-text.font-xl { font-size: 1.6rem; }
+@media (max-width: 600px) { .reader-text { padding: 1.25rem; } }

@@ -43,7 +43,7 @@
         <tbody>
         {% for doc in documents %}
           <tr>
-            <td class="strong">{{ doc.title }}</td>
+            <td class="strong"><a href="{% url 'dashboard:reader' doc.pk %}">{{ doc.title }}</a></td>
             <td><span class="pill">{{ doc.file_type|upper }}</span></td>
             <td>{{ doc.word_count|default:0 }}</td>
             <td>
@@ -53,7 +53,8 @@
               <span class="muted small">{{ doc.progress.progress_percent|floatformat:0 }}% · {{ doc.progress.status }}</span>
             </td>
             <td class="muted">{{ doc.uploaded_at|date:"M j, Y" }}</td>
-            <td class="right">
+            <td class="right actions">
+              <a href="{% url 'dashboard:reader' doc.pk %}" class="btn btn-primary btn-sm">{% if doc.progress.status == 'in_progress' %}Continue{% else %}Read{% endif %}</a>
               <form method="post" action="{% url 'dashboard:delete_document' doc.pk %}"
                     onsubmit="return confirm('Remove this document?');">
                 {% csrf_token %}

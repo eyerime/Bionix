@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}{{ doc.title }} · BionixReader{% endblock %}
+{% block content %}
+<div class="read-progress" aria-hidden="true"><div id="read-bar"></div></div>
+
+<div class="page-head">
+  <div>
+    <h1>{{ doc.title }}</h1>
+    <p class="muted small">{{ doc.word_count }} words · <span id="read-percent">0</span>% read</p>
+  </div>
+  <a href="{% url 'dashboard:home' %}" class="btn btn-ghost btn-sm">&larr; Back to dashboard</a>
+</div>
+
+<form method="post" action="{% url 'dashboard:reader_settings' doc.pk %}" class="card reader-controls" id="settings-form">
+  {% csrf_token %}
+  <input type="hidden" name="percent" id="settings-percent" value="">
+  <div class="control">
+    <label for="theme">Theme</label>
+    <select name="theme" id="theme" class="input">
+      {% for t in themes %}
+        <option value="{{ t }}" {% if profile.theme_preference == t %}selected{% endif %}>{{ t|title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="control">
+    <label for="font_size">Font size</label>
+    <select name="font_size" id="font_size" class="input">
+      {% for key, label in font_sizes %}
+        <option value="{{ key }}" {% if profile.font_size_pref == key %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="control grow">
+    <label for="fixation_intensity">Bold intensity: <strong id="intensity-label">{{ intensity|stringformat:".2f" }}</strong></label>
+    <input type="range" name="fixation_intensity" id="fixation_intensity"
+           min="0.1" max="0.9" step="0.05" value="{{ intensity|stringformat:'.2f' }}">
+  </div>
+  <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+</form>
+
+<article class="card reader-text font-{{ profile.font_size_pref }}" id="reader-text">
+  {{ content }}
+</article>
+
+<script>
+(function () {
+  var startPercent = {{ resume_percent|stringformat:".2f" }};
+  var sessionId = {{ session_id }};
+  var progressUrl = "{% url 'dashboard:save_progress' doc.pk %}";
+  var csrf = "{{ csrf_token }}";
+  var furthest = startPercent, lastSent = -1;
+
+  function percent() {
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    if (max <= 0) return 100;
+    return Math.max(0, Math.min(100, window.scrollY / max * 100));
+  }
+  function update() {
+    var p = percent();
+    if (p > furthest) furthest = p;
+    document.getElementById('read-bar').style.width = p + '%';
+    document.getElementById('read-percent').textContent = Math.round(p);
+  }
+  function send() {
+    var p = percent();
+    if (Math.abs(p - lastSent) < 0.5) return;
+    lastSent = p;
+    fetch(progressUrl, {
+      method: 'POST', keepalive: true,
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrf},
+      body: JSON.stringify({percent: p, start_percent: startPercent,
+                            furthest: furthest, session_id: sessionId})
+    }).catch(function () {});
+  }
+
+  window.addEventListener('scroll', update, {passive: true});
+  window.addEventListener('load', function () {
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    if (startPercent > 0 && max > 0) window.scrollTo(0, startPercent / 100 * max);
+    update();
+  });
+  setInterval(send, 5000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') send();
+  });
+  window.addEventListener('pagehide', send);
+
+  var slider = document.getElementById('fixation_intensity');
+  slider.addEventListener('input', function () {
+    document.getElementById('intensity-label').textContent = parseFloat(slider.value).toFixed(2);
+  });
+  document.getElementById('settings-form').addEventListener('submit', function () {
+    document.getElementById('settings-percent').value = percent().toFixed(2);
+  });
+})();
+</script>
+{% endblock %}
