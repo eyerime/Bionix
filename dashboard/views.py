@@ -6,6 +6,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from django.core.paginator import Paginator
+from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -205,3 +207,34 @@ def reader_settings(request, pk):
         pass
 
     return redirect('dashboard:reader', pk=doc.pk)
+
+
+# --------------------------------------------------------------- history --
+
+def _fmt_duration(seconds):
+    minutes, secs = divmod(int(seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f'{hours}h {minutes}m'
+    if minutes:
+        return f'{minutes}m {secs}s'
+    return f'{secs}s'
+
+
+@login_required
+def history(request):
+    """Every reading session the user has had, newest first."""
+    sessions = (ReadingSession.objects
+                .filter(user=request.user, duration_seconds__gt=0)
+                .select_related('document').order_by('-started_at'))
+    totals = sessions.aggregate(time=Sum('duration_seconds'), words=Sum('words_read'))
+    page = Paginator(sessions, 15).get_page(request.GET.get('page'))
+    rows = [{'session': s, 'duration': _fmt_duration(s.duration_seconds)} for s in page]
+
+    return render(request, 'dashboard/history.html', {
+        'page': page,
+        'rows': rows,
+        'session_count': sessions.count(),
+        'total_time': _fmt_duration(totals['time'] or 0),
+        'total_words': totals['words'] or 0,
+    })
