@@ -183,5 +183,13 @@ class ReaderTests(TestCase):
             user=self.user, document=self.doc, started_at=timezone.now(),
             duration_seconds=300, words_read=2000, reading_speed_wpm=400)
         stats = recalculate_stats(self.user)
-        # 2000 words at 238 wpm ~ 504s; reading took 300s => ~204s saved => 3 min
+        # 300s at 400 wpm vs 238 wpm baseline: 300 * (400/238 - 1) ~ 204s => 3 min
         self.assertEqual(stats.total_time_saved_min, 3)
+
+    def test_quick_open_does_not_create_time_saved(self):
+        # 50 words "read" in 2 seconds: too short for a valid speed, so nothing saved
+        ReadingSession.objects.create(
+            user=self.user, document=self.doc, started_at=timezone.now(),
+            duration_seconds=2, words_read=50, reading_speed_wpm=0)
+        stats = recalculate_stats(self.user)
+        self.assertEqual(stats.total_time_saved_min, 0)

@@ -41,10 +41,13 @@ def recalculate_stats(user):
     speeds = [s.reading_speed_wpm for s in sessions if s.reading_speed_wpm > 0]
     stats.avg_reading_speed_wpm = round(sum(speeds) / len(speeds)) if speeds else 0
 
+    # Time saved = time the user would have needed at a normal pace minus the time
+    # they actually spent. Only sessions long enough to yield a valid speed count,
+    # so opening a document for a second cannot inflate the number.
     saved_seconds = 0
     for s in sessions:
-        if s.words_read > 0 and s.duration_seconds > 0:
-            saved_seconds += max(0, s.words_read / NORMAL_WPM * 60 - s.duration_seconds)
+        if s.reading_speed_wpm > NORMAL_WPM and s.duration_seconds > 0:
+            saved_seconds += s.duration_seconds * (s.reading_speed_wpm / NORMAL_WPM - 1)
     stats.total_time_saved_min = int(saved_seconds // 60)
 
     stats.documents_read_count = ReadingProgress.objects.filter(
