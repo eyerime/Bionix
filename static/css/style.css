@@ -98,3 +98,6 @@ h2 { font-size: 1.15rem; margin: 0 0 1rem; }
 .reader-text.font-lg { font-size: 1.35rem; }
 .reader-text.font-xl { font-size: 1.6rem; }
 @media (max-width: 600px) { .reader-text { padding: 1.25rem; } }
+
+/* ---- history ---- */
+.pager { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1.25rem; }

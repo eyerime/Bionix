@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Reading history · BionixReader{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Reading history</h1>
+    <p class="muted">Every session you have spent reading.</p>
+  </div>
+  <a href="{% url 'dashboard:home' %}" class="btn btn-ghost btn-sm">&larr; Back to dashboard</a>
+</div>
+
+<section class="stats">
+  <div class="card stat">
+    <span class="stat-label">Sessions</span>
+    <span class="stat-value">{{ session_count }}</span>
+  </div>
+  <div class="card stat">
+    <span class="stat-label">Total time</span>
+    <span class="stat-value">{{ total_time }}</span>
+  </div>
+  <div class="card stat">
+    <span class="stat-label">Words read</span>
+    <span class="stat-value">{{ total_words }}</span>
+  </div>
+</section>
+
+<section class="card">
+  {% if rows %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Document</th><th>Started</th><th>Duration</th><th>Words</th><th>Speed</th></tr>
+        </thead>
+        <tbody>
+        {% for row in rows %}
+          <tr>
+            <td class="strong"><a href="{% url 'dashboard:reader' row.session.document.pk %}">{{ row.session.document.title }}</a></td>
+            <td class="muted">{{ row.session.started_at|date:"M j, Y g:i A" }}</td>
+            <td>{{ row.duration }}</td>
+            <td>{{ row.session.words_read }}</td>
+            <td>{% if row.session.reading_speed_wpm %}{{ row.session.reading_speed_wpm }} wpm{% else %}<span class="muted">&ndash;</span>{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page.has_other_pages %}
+      <div class="pager">
+        {% if page.has_previous %}<a class="btn btn-ghost btn-sm" href="?page={{ page.previous_page_number }}">&larr; Newer</a>{% endif %}
+        <span class="muted small">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}<a class="btn btn-ghost btn-sm" href="?page={{ page.next_page_number }}">Older &rarr;</a>{% endif %}
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="empty">
+      <p>No reading sessions yet.</p>
+      <p class="muted">Open a document and read for a bit &mdash; your sessions will show up here.</p>
+      <a href="{% url 'dashboard:home' %}" class="btn btn-primary">Go to your library</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
